@@ -1,10 +1,13 @@
 import { useEditor, EditorContent, useEditorState, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 
-interface EditorToolbarProps {
-    editor: Editor | null,
+type ToolbarState = {
     canUndo: boolean,
     canRedo: boolean
+}
+
+type EditorToolbarProps = ToolbarState & {
+    editor: Editor
 }
 
 export default function TipTap() {
@@ -19,11 +22,9 @@ export default function TipTap() {
         editor,
         selector: ({ editor }) => {
             if (!editor) {
-                return {
-                    canUndo: false,
-                    canRedo: false
-                }
+                return null
             }
+
             return {
                 canUndo: editor.can().chain().focus().undo().run(),
                 canRedo: editor.can().chain().focus().redo().run()
@@ -31,9 +32,12 @@ export default function TipTap() {
         }
     })
 
+    if (!editor || !currentState) return <div>Loading...</div>
+
     return (
         <div>
-            <EditorToolbar editor={editor} canUndo={currentState?.canUndo ?? false} canRedo={currentState?.canRedo ?? false} />
+            <EditorToolbar editor={editor} {...currentState} />
+
             <EditorContent editor={editor} />
 
             {JSON.stringify(currentState)}
@@ -41,19 +45,16 @@ export default function TipTap() {
     )
 }
 
-function EditorToolbar({ editor, canUndo, canRedo }: EditorToolbarProps) {
-    if (!editor || canUndo === undefined || canRedo === undefined) return null;
-
+function EditorToolbar({ editor, canRedo, canUndo }: EditorToolbarProps) {
     return (
-        <div>
+        <>
             <button
                 type="button"
                 onClick={() => editor.chain().focus().undo().run()}
-                disabled={!canUndo}>
+                disabled={!canUndo}
+            >
                 Undo
             </button>
-
-            {JSON.stringify(editor.can().chain().focus().undo().run())}
-        </div>
+        </>
     )
 }
