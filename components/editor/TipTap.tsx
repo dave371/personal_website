@@ -1,30 +1,38 @@
 import { useEditor, EditorContent, useEditorState, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 
-type ToolbarState = {
-    canUndo: boolean,
-    canRedo: boolean
-}
-
-type EditorToolbarProps = ToolbarState & {
+type EditorToolbarProps = {
     editor: Editor
 }
 
 export default function TipTap() {
     const editor = useEditor({
-        extensions: [StarterKit],
+        extensions: [StarterKit.configure({
+            heading: {
+                levels: [1, 2, 3, 4, 5, 6]
+            }
+        })],
         content: '<p>Hello Everyone!</p>',
         immediatelyRender: false
     })
 
 
-    const currentState = useEditorState({
+    if (!editor) return null
+
+
+    return (
+        <div>
+            <EditorToolbar editor={editor} />
+
+            <EditorContent editor={editor} />
+        </div>
+    )
+}
+
+function EditorToolbar({ editor }: EditorToolbarProps) {
+    const { canRedo, canUndo } = useEditorState({
         editor,
         selector: ({ editor }) => {
-            if (!editor) {
-                return null
-            }
-
             return {
                 canUndo: editor.can().chain().focus().undo().run(),
                 canRedo: editor.can().chain().focus().redo().run()
@@ -32,20 +40,6 @@ export default function TipTap() {
         }
     })
 
-    if (!editor || !currentState) return <div>Loading...</div>
-
-    return (
-        <div>
-            <EditorToolbar editor={editor} {...currentState} />
-
-            <EditorContent editor={editor} />
-
-            {JSON.stringify(currentState)}
-        </div>
-    )
-}
-
-function EditorToolbar({ editor, canRedo, canUndo }: EditorToolbarProps) {
     return (
         <>
             <button
@@ -54,6 +48,20 @@ function EditorToolbar({ editor, canRedo, canUndo }: EditorToolbarProps) {
                 disabled={!canUndo}
             >
                 Undo
+            </button>
+
+            <button
+                type="button"
+                onClick={() => editor.chain().focus().redo().run()}
+                disabled={!canRedo}
+            >
+                Redo
+            </button>
+
+            <button type="button"
+                onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+                disabled={!editor.can().chain().focus().toggleHeading({ level: 1 }).run()}>
+                h1
             </button>
         </>
     )
